@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Projet Cryptographie</title>
+
+    <style>
+
+        body{
+            font-family: Arial;
+            background-color:#f0f2f5;
+            padding:40px;
+        }
+
+        .container{
+            background:white;
+            padding:30px;
+            border-radius:10px;
+            width:500px;
+            margin:auto;
+            box-shadow:0 0 10px rgba(0,0,0,0.2);
+        }
+
+        h1{
+            text-align:center;
+        }
+
+        label{
+            font-weight:bold;
+        }
+
+        input, select, textarea{
+            width:100%;
+            padding:10px;
+            margin-top:10px;
+            margin-bottom:20px;
+        }
+
+        button{
+            padding:10px 20px;
+            margin-right:10px;
+            cursor:pointer;
+        }
+
+        .result{
+            background:#eee;
+            padding:15px;
+            border-radius:5px;
+            margin-top:20px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Mini Projet Cryptographie</h1>
+
+    <label>Type de cryptographie :</label>
+
+    <select id="typeCrypto">
+        <option value="sym">Symétrique</option>
+        <option value="asym">Asymétrique RSA</option>
+    </select>
+
+    <label>Algorithme :</label>
+
+    <select id="algo">
+        <option value="cesar">César</option>
+        <option value="vigenere">Vigenère</option>
+        <option value="hill">Hill</option>
+        <option value="rsa">RSA</option>
+    </select>
+
+    <label>Message :</label>
+
+    <textarea id="message"></textarea>
+
+    <label>Clé :</label>
+
+    <input type="text" id="cle">
+
+    <button onclick="chiffrer()">Chiffrer</button>
+
+    <button onclick="dechiffrer()">Déchiffrer</button>
+
+    <div class="result">
+
+        <h3>Résultat :</h3>
+
+        <p id="resultat"></p>
+
+    </div>
+
+</div>
+
+<script>
+
+    let dernierMessage = "";
+
+    // =========================
+    // CESAR
+    // =========================
+
+    function cesarChiffrer(message, cle){
+
+        let resultat = "";
+
+        for(let i=0;i<message.length;i++){
+
+            let c = message[i];
+
+            if(c.match(/[a-z]/i)){
+
+                let code = message.charCodeAt(i);
+
+                let base = (code >= 65 && code <= 90) ? 65 : 97;
+
+                c = String.fromCharCode(((code - base + parseInt(cle)) % 26) + base);
+            }
+
+            resultat += c;
+        }
+
+        return resultat;
+    }
+
+    function cesarDechiffrer(message, cle){
+
+        return cesarChiffrer(message, 26 - cle);
+    }
+
+    // =========================
+    // VIGENERE
+    // =========================
+
+    function vigenereChiffrer(message, cle){
+
+        let resultat = "";
+        cle = cle.toLowerCase();
+
+        let j = 0;
+
+        for(let i=0;i<message.length;i++){
+
+            let c = message[i];
+
+            if(c.match(/[a-z]/i)){
+
+                let base = (c === c.toUpperCase()) ? 65 : 97;
+
+                let decalage = cle.charCodeAt(j % cle.length) - 97;
+
+                c = String.fromCharCode(
+                    ((message.charCodeAt(i) - base + decalage) % 26) + base
+                );
+
+                j++;
+            }
+
+            resultat += c;
+        }
+
+        return resultat;
+    }
+
+    function vigenereDechiffrer(message, cle){
+
+        let resultat = "";
+        cle = cle.toLowerCase();
+
+        let j = 0;
+
+        for(let i=0;i<message.length;i++){
+
+            let c = message[i];
+
+            if(c.match(/[a-z]/i)){
+
+                let base = (c === c.toUpperCase()) ? 65 : 97;
+
+                let decalage = cle.charCodeAt(j % cle.length) - 97;
+
+                c = String.fromCharCode(
+                    ((message.charCodeAt(i) - base - decalage + 26) % 26) + base
+                );
+
+                j++;
+            }
+
+            resultat += c;
+        }
+
+        return resultat;
+    }
+
+    // =========================
+    // HILL
+    // =========================
+
+    function hillChiffrer(message){
+
+        let matrice = [
+            [3,3],
+            [2,5]
+        ];
+
+        message = message.toUpperCase().replace(/ /g,'');
+
+        if(message.length % 2 !== 0){
+            message += "X";
+        }
+
+        let resultat = "";
+
+        for(let i=0;i<message.length;i+=2){
+
+            let x = message.charCodeAt(i)-65;
+            let y = message.charCodeAt(i+1)-65;
+
+            let c1 = (matrice[0][0]*x + matrice[0][1]*y)%26;
+            let c2 = (matrice[1][0]*x + matrice[1][1]*y)%26;
+
+            resultat += String.fromCharCode(c1+65);
+            resultat += String.fromCharCode(c2+65);
+        }
+
+        return resultat;
+    }
+
+    // =========================
+    // RSA
+    // =========================
+
+    function rsaChiffrer(message){
+
+        let resultat = [];
+
+        let e = 7;
+        let n = 187;
+
+        for(let i=0;i<message.length;i++){
+
+            resultat.push(
+                Math.pow(message.charCodeAt(i), e) % n
+            );
+        }
+
+        return resultat.join(" ");
+    }
+
+    // =========================
+    // BOUTON CHIFFRER
+    // =========================
+
+    function chiffrer(){
+
+        let algo = document.getElementById("algo").value;
+
+        let message = document.getElementById("message").value;
+
+        let cle = document.getElementById("cle").value;
+
+        let resultat = "";
+
+        dernierMessage = message;
+
+        if(algo === "cesar"){
+
+            resultat = cesarChiffrer(message, cle);
+        }
+
+        else if(algo === "vigenere"){
+
+            resultat = vigenereChiffrer(message, cle);
+        }
+
+        else if(algo === "hill"){
+
+            resultat = hillChiffrer(message);
+        }
+
+        else if(algo === "rsa"){
+
+            resultat = rsaChiffrer(message);
+        }
+
+        document.getElementById("resultat").innerText = resultat;
+    }
+
+    // =========================
+    // BOUTON DECHIFFRER
+    // =========================
+
+    function dechiffrer(){
+
+        let algo = document.getElementById("algo").value;
+
+        let message = document.getElementById("resultat").innerText;
+
+        let cle = document.getElementById("cle").value;
+
+        let resultat = "";
+
+        if(algo === "cesar"){
+
+            resultat = cesarDechiffrer(message, cle);
+        }
+
+        else if(algo === "vigenere"){
+
+            resultat = vigenereDechiffrer(message, cle);
+        }
+
+        else if(algo === "hill"){
+
+            resultat = "Déchiffrement Hill non implémenté";
+        }
+
+        else if(algo === "rsa"){
+
+            resultat = "Déchiffrement RSA simplifié";
+        }
+
+        document.getElementById("resultat").innerText = resultat;
+    }
+
+</script>
+
+</body>
+</html>
